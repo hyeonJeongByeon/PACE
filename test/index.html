@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACE Practice</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Persistent frame: practice framing + exit control on every screen (HANDOVER §5.4) -->
+<div class="topbar" id="topbar" style="display:none">
+  <span class="brand">PACE</span>
+  <span class="frame">🎭 Practice simulation — not medical advice or real care</span>
+  <button class="exit" onclick="App.exitNow()">Exit practice</button>
+</div>
+
+<!-- ═══ GATE ═══ -->
+<div id="view-gate" class="view active">
+  <div class="wrap" style="max-width:420px;padding-top:4.5rem">
+    <h1>PACE Practice</h1>
+    <p class="sub">Enter the study passcode to begin. (Your researcher shares it with the link.)</p>
+    <input type="password" id="passcode-input" placeholder="Study passcode" onkeypress="if(event.key==='Enter')App.enterPasscode()">
+    <button class="primary" onclick="App.enterPasscode()">Continue</button>
+    <p class="mute" id="gate-err" style="margin-top:.6rem"></p>
+  </div>
+</div>
+
+<!-- ═══ EDUCATION ═══ -->
+<!-- TODO: wording is DRAFT, pending the PACE text materials used in the interview protocol -->
+<div id="view-education" class="view">
+  <div class="wrap">
+    <h1>Getting more out of a medical visit</h1>
+    <p class="sub">PACE is a set of four things patients can do during a visit, developed by communication researcher Donald Cegala. Read these — then you'll practice them in a short role-play tailored to you.</p>
+    <div class="card pace-item"><div class="pace-letter P">P</div><div><b>Present</b> — describe your situation clearly and completely: when it started, how often, how bad, what you've tried, and what you hope the visit accomplishes.<div class="example">"It started six weeks ago, it's most afternoons, and ibuprofen barely touches it."</div></div></div>
+    <div class="card pace-item"><div class="pace-letter A">A</div><div><b>Ask</b> — ask the questions you actually have, about the diagnosis, tests, medications, or the plan.<div class="example">"What's that test for, and how will the result change what we do?"</div></div></div>
+    <div class="card pace-item"><div class="pace-letter C">C</div><div><b>Check</b> — verify you understood: restate the plan in your own words, ask what a term means, summarize before you leave.<div class="example">"So just to check — twice a day with food, and come back in two weeks even if I feel fine?"</div></div></div>
+    <div class="card pace-item"><div class="pace-letter E">E</div><div><b>Express</b> — voice concerns, doubts, and anything that would keep you from following the plan.<div class="example">"Honestly, I'm worried it's something serious — and I'm not sure I can afford that option."</div></div></div>
+    <div class="card" style="background:var(--coach-bg);border-color:var(--coach-line);font-size:.84rem;color:#6b4004">
+      You'll practice in a <b>made-up visit built around a topic you choose</b>. A coach may quietly chime in with tips, and you'll get a summary at the end to keep. Please don't enter real personal health details you wouldn't want in a practice tool — the scenario only needs the general shape of your situation.
+    </div>
+    <button class="primary" onclick="App.toMenu()">Continue →</button>
+  </div>
+</div>
+
+<!-- ═══ SCENARIO MENU ═══ -->
+<div id="view-menu" class="view">
+  <div class="wrap">
+    <h1>Pick the kind of visit you want to practice</h1>
+    <p class="sub">Five common communication challenges. Choose the one that feels most like the visits you struggle with.</p>
+    <div id="seed-list"></div>
+    <button class="primary" id="menu-next" disabled onclick="App.toSurvey()">Next: a few questions before the visit →</button>
+  </div>
+</div>
+
+<!-- ═══ SURVEY ═══ -->
+<div id="view-survey" class="view">
+  <div class="wrap">
+    <h1>Before your practice visit</h1>
+    <p class="sub">Like the forms you'd fill out before a real appointment. Your answers shape the role-play so it feels like <i>your</i> visit. Use your real topic or a made-up one — either works.</p>
+    <div class="card" id="survey-partA"><h2 style="margin-top:0">About the visit</h2></div>
+    <div class="card" id="survey-partB"><h2 style="margin-top:0">Thinking about your past medical visits…</h2><div class="likert-row" style="border-bottom:1.5px solid var(--line)"><span></span><span class="likert-head">Never</span><span class="likert-head">Sometimes</span><span class="likert-head">Often</span></div></div>
+    <div class="card" id="survey-focus"><h2 style="margin-top:0">Your focus</h2></div>
+    <div class="card" id="survey-safety"></div>
+    <p class="mute" id="survey-err"></p>
+    <button class="primary" onclick="App.submitSurvey()">Build my practice visit →</button>
+  </div>
+</div>
+
+<!-- ═══ GENERATING ═══ -->
+<div id="view-generating" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <div class="spinner"></div>
+    <h1 style="font-size:1.1rem" id="gen-title">Setting up your visit…</h1>
+    <p class="sub" id="gen-sub">Tailoring the scenario to what you told us</p>
+  </div>
+</div>
+
+<!-- ═══ BRIEFING ═══ -->
+<div id="view-briefing" class="view">
+  <div class="wrap">
+    <h1>Your situation</h1>
+    <p class="sub">Read this like the moment before the exam-room door opens:</p>
+    <div class="card" id="brief-premise" style="font-size:.95rem;line-height:1.65"></div>
+    <p class="mute">You'll type as yourself. There's no turn limit — the visit flows on its own clock, like a real appointment. A coach may quietly add a tip; the clinician can't "hear" those.</p>
+    <button class="primary" onclick="App.startVisit()">Walk in →</button>
+  </div>
+</div>
+
+<!-- ═══ ROLE-PLAY ═══ -->
+<div id="view-roleplay" class="view">
+  <div class="chat-head">
+    <div class="avatar" id="rp-avatar">🩺</div>
+    <div class="who"><b id="rp-name"></b><div id="rp-sub"></div></div>
+    <span class="timer-pill">Visit time <b id="rp-timer">0:00</b> <span class="mute">· ~10 min</span></span>
+  </div>
+  <div class="situation-strip collapsed" id="situation-strip" onclick="this.classList.toggle('collapsed')">
+    <div class="ss-label">📋 Your situation <span class="ss-hint">(click to expand)</span></div>
+    <div class="ss-text" id="situation-text"></div>
+  </div>
+  <div id="chat-log"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Say something to the clinician…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
+    <button id="send-btn" onclick="App.send()">➤</button>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY (report card) ═══ -->
+<div id="view-summary" class="view">
+  <div class="wrap">
+    <h1>Your practice summary</h1>
+    <p class="sub" id="summary-sub"></p>
+    <div id="summary-body"><div class="card"><div class="spinner" style="margin:1rem auto"></div><p style="text-align:center" class="mute" id="summary-progress">Reviewing your conversation…</p></div></div>
+    <div class="tools-row no-print" id="summary-tools" style="display:none">
+      <button class="ghost" onclick="App.downloadReport()">⬇ Download summary</button>
+      <button class="ghost" onclick="App.downloadJSON()">⬇ Session data (JSON)</button>
+      <button class="ghost" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXITED ═══ -->
+<div id="view-exited" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <h1>Session ended</h1>
+    <p class="sub">Thanks for trying PACE. You can close this window.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/survey.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/mistakes.js"></script>
+<script src="js/state.js"></script>
+<script src="js/prompts/instantiate.js"></script>
+<script src="js/prompts/planner.js"></script>
+<script src="js/prompts/generator.js"></script>
+<script src="js/prompts/coach.js"></script>
+<script src="js/prompts/annotator.js"></script>
+<script src="js/prompts/overview.js"></script>
+<script src="js/prompts/qa.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

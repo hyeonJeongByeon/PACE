@@ -1,0 +1,23 @@
+#!/bin/sh
+# Participant-data leak check (HANDOVER_SPEC.md §7).
+# Blocks commits of likely participant data: CSVs, Qualtrics response IDs,
+# email addresses, or real API keys. Synthetic fixtures must avoid these forms.
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+fail=0
+for f in $staged; do
+  case "$f" in
+    *.csv) echo "BLOCKED: $f — CSV files are never committed."; fail=1; continue;;
+  esac
+  if git show ":$f" | grep -qE 'R_[A-Za-z0-9]{15}'; then
+    echo "BLOCKED: $f — contains a Qualtrics response ID (R_...)."; fail=1
+  fi
+  if git show ":$f" | grep -qE 'sk-ant-api03-[A-Za-z0-9_-]{20,}'; then
+    echo "BLOCKED: $f — contains what looks like a real Anthropic API key."; fail=1
+  fi
+  if git show ":$f" | grep -qiE '[a-z0-9._%+-]+@(uw\.edu|seattlechildrens\.org|gmail\.com)'; then
+    echo "BLOCKED: $f — contains an email address."; fail=1
+  fi
+done
+exit $fail

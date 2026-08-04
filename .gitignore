@@ -1,0 +1,16 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Participant data — never committed (see CLAUDE.md)
+*.csv
+*transcript*.json
+*session*.json
+
+# Dependencies / OS
+node_modules/
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
