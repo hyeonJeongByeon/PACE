@@ -1,8 +1,20 @@
-# PACE Prototype v2 — Project Rules
+# PACE Prototype — Project Rules
 
-## Authoritative spec
-`HANDOVER_SPEC.md` is the authoritative design spec. Its §1–4 are settled;
-its **CONFIRM** items must not be silently resolved.
+## Two prototypes, two specs
+- `test/` (v2, first pilot build) — spec: `HANDOVER_SPEC.md`.
+- `test2/` (v2.1, post-pilot) — spec: `HANDOVER_SPEC_V2.md`, which SUPERSEDES
+  the v1 handover for everything in `test2/`. Its §1–6 are settled; its
+  **CONFIRM** items must not be silently resolved.
+- `test/` is kept frozen for comparison; new work happens in `test2/`.
+
+## v2.1 (`test2/`) — key spec-mandated reversals of the v1 build
+Per HANDOVER_SPEC_V2 §1 (pilot findings): NO scenario menu (§6.1 — assignment
+is screener-driven, §3.4); corrective in-session coaching removed — live tips
+are reinforcement-only, max 2 (§8); 12-turn/10-min caps restored with the §6.4
+soft close (countdown timer, wrap-up phase, grace turns, "See how you did"
+button). The §7.5 anchoring rule, §7.2 appropriateness gate, and §7.6 volume
+caps are enforced in `test2/js/aggregator.js` (pure functions) and covered by
+`tests/aggregator.test.mjs` — run it after touching the aggregator.
 
 ## Researcher-authorized deviations from the handover (Aug 2026)
 Recorded per the handover's own "flag deviations" rule:

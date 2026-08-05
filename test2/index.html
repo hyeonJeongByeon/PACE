@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACE Practice</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Persistent frame: practice framing + exit control (§6.5) -->
+<div class="topbar" id="topbar" style="display:none">
+  <span class="brand">PACE</span>
+  <span class="frame">🎭 Practice simulation — not medical advice or real care</span>
+  <button class="exit" onclick="App.exitNow()">Exit practice</button>
+</div>
+
+<!-- ═══ GATE ═══ -->
+<div id="view-gate" class="view active">
+  <div class="wrap" style="max-width:420px;padding-top:4.5rem">
+    <h1>PACE Practice</h1>
+    <p class="sub">Enter the study passcode to begin.</p>
+    <input type="password" id="passcode-input" placeholder="Study passcode" onkeypress="if(event.key==='Enter')App.enterPasscode()">
+    <button class="primary" onclick="App.enterPasscode()">Continue</button>
+    <p class="mute" id="gate-err" style="margin-top:.6rem"></p>
+  </div>
+</div>
+
+<!-- ═══ EDUCATION (facilitated mode: minimal — facilitator script covers the rest, §5.1) ═══ -->
+<div id="view-education" class="view">
+  <div class="wrap">
+    <h1>Four things patients can do in a visit</h1>
+    <p class="sub">Take a moment with these — you'll practice them in a role-play built around your own topic.</p>
+    <div class="card pace-item"><div class="pace-letter P">P</div><div><b>Present</b> — telling your story: when it started, how bad it gets, what you've tried, what you hope for.<div class="example">"It started six weeks ago, and ibuprofen barely touches it."</div></div></div>
+    <div class="card pace-item"><div class="pace-letter A">A</div><div><b>Ask</b> — getting your questions answered.<div class="example">"What's that test for, and how will the result change things?"</div></div></div>
+    <div class="card pace-item"><div class="pace-letter C">C</div><div><b>Check</b> — making sure you understood.<div class="example">"So just to check — twice a day with food, for two weeks?"</div></div></div>
+    <div class="card pace-item"><div class="pace-letter E">E</div><div><b>Express</b> — saying what's worrying you.<div class="example">"Honestly, I'm worried it's something more serious."</div></div></div>
+    <button class="primary" onclick="App.toSurvey()">Continue →</button>
+  </div>
+</div>
+
+<!-- ═══ SURVEY (no scenario menu — §6.1) ═══ -->
+<div id="view-survey" class="view">
+  <div class="wrap">
+    <h1>Before your practice visit</h1>
+    <p class="sub">Like the forms before a real appointment. Your answers shape the role-play. Use your real topic or a made-up one — either works, and please skip real details you wouldn't want in a practice tool.</p>
+    <div class="card" id="survey-partA"><h2 style="margin-top:0">About the visit</h2></div>
+    <div class="card" id="survey-treatments"></div>
+    <div class="card" id="survey-partB"><h2 style="margin-top:0">Thinking about your past medical visits…</h2><div class="likert-row" style="border-bottom:1.5px solid var(--line)"><span></span><span class="likert-head">Never</span><span class="likert-head">Sometimes</span><span class="likert-head">Often</span></div></div>
+    <div class="card" id="survey-focus"><h2 style="margin-top:0">Your focus</h2></div>
+    <div class="card" id="survey-safety"></div>
+    <p class="mute" id="survey-err"></p>
+    <button class="primary" onclick="App.submitSurvey()">Build my practice visit →</button>
+  </div>
+</div>
+
+<!-- ═══ GENERATING ═══ -->
+<div id="view-generating" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <div class="spinner"></div>
+    <h1 style="font-size:1.1rem">Setting up your visit…</h1>
+    <p class="sub">Tailoring the scenario to what you told us</p>
+  </div>
+</div>
+
+<!-- ═══ BRIEFING: premise + chart box (§4.3) + §5.2 instructions ═══ -->
+<div id="view-briefing" class="view">
+  <div class="wrap">
+    <h1>Your situation</h1>
+    <div class="card" id="brief-premise" style="font-size:.95rem;line-height:1.65"></div>
+    <div class="card chart-box">
+      <div class="chart-box-label">📄 What's already in your chart</div>
+      <div class="mute" style="margin-bottom:.4rem">The doctor walks in knowing this — you don't need to repeat it:</div>
+      <ul id="brief-chart" style="padding-left:1.1rem;font-size:.86rem;line-height:1.6"></ul>
+    </div>
+    <div class="card" style="font-size:.84rem;color:var(--ink-soft)">
+      <b style="color:var(--ink)">How this works</b>
+      <ul style="padding-left:1.1rem;line-height:1.7;margin-top:.3rem">
+        <li>Everything is <b>typed chat</b> — any coach note arrives as a message, not audio.</li>
+        <li>Please don't look things up outside — <b>asking the doctor is the exercise</b>.</li>
+        <li>The visit wraps up in conversation. When it ends, one button takes you to your summary.</li>
+      </ul>
+    </div>
+    <button class="primary" onclick="App.startVisit()">Walk in →</button>
+  </div>
+</div>
+
+<!-- ═══ ROLE-PLAY ═══ -->
+<div id="view-roleplay" class="view">
+  <div class="chat-head">
+    <div class="avatar" id="rp-avatar">🩺</div>
+    <div class="who"><b id="rp-name"></b><div>Practice visit</div></div>
+    <span class="timer-pill" id="timer-pill">⏱ <b id="rp-timer">10:00</b> left</span>
+  </div>
+  <div class="situation-strip collapsed" id="situation-strip" onclick="this.classList.toggle('collapsed')">
+    <div class="ss-label">📋 Your situation <span class="ss-hint">(click to expand)</span></div>
+    <div class="ss-text" id="situation-text"></div>
+  </div>
+  <div id="chat-log"></div>
+  <div class="see-results-row no-print" id="see-results-row" style="display:none">
+    <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did →</button>
+  </div>
+  <div class="chat-input-row" id="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
+    <button id="send-btn" onclick="App.send()">➤</button>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div id="view-summary" class="view">
+  <div class="wrap">
+    <h1>How your practice visit went</h1>
+    <p class="sub" id="summary-sub"></p>
+    <div id="summary-body"><div class="card"><div class="spinner" style="margin:1rem auto"></div><p style="text-align:center" class="mute" id="summary-progress">Looking back over your visit…</p></div></div>
+    <div class="tools-row no-print" id="summary-tools" style="display:none">
+      <button class="ghost" onclick="App.downloadReport()">⬇ Download summary</button>
+      <button class="ghost" onclick="App.downloadJSON()">⬇ Session data (JSON)</button>
+      <button class="ghost" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXITED ═══ -->
+<div id="view-exited" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <h1>Session ended</h1>
+    <p class="sub">Thanks for trying PACE. You can close this window.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/survey.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/mistakes.js"></script>
+<script src="js/state.js"></script>
+<script src="js/aggregator.js"></script>
+<script src="js/prompts/instantiate.js"></script>
+<script src="js/prompts/planner.js"></script>
+<script src="js/prompts/generator.js"></script>
+<script src="js/prompts/coach.js"></script>
+<script src="js/prompts/annotator.js"></script>
+<script src="js/prompts/overview.js"></script>
+<script src="js/prompts/qa.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
