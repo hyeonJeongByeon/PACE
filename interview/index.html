@@ -29,7 +29,7 @@
 <div id="view-education" class="view">
   <div class="wrap">
     <h1>Preparing for a medical visit</h1>
-    <p class="sub">Office visits are short, often about 15 minutes. Preparing ahead helps you make the most of that time. Researchers at Ohio State University developed the <a href="https://wexnermedical.osu.edu/-/media/files/wexnermedical/blog/2017pace.pdf" target="_blank" rel="noopener">PACE Guide Sheet</a> as an easy way to organize your feelings, questions, and concerns before a visit.</p>
+    <p class="sub">Office visits are short, often about 15 minutes. Preparing ahead helps you make the most of that time. Researchers have developed four guidelines for patients, called PACE, as an easy way to organize your feelings, questions, and concerns before a visit.</p>
 
     <div class="card pace-item"><div class="pace-letter P">P</div><div><b>Provide information about how you feel.</b>
       <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.2rem">Write down your symptoms and concerns before the visit. Note when things started, how often they happen, and what you have tried. Think about what you hope your health care professional can do for you.</div>
@@ -55,15 +55,6 @@
       <div class="example">"That side effect worries me. What are my options?"</div>
     </div></div>
 
-    <div class="card" style="font-size:.84rem;color:var(--ink-soft)">
-      <b style="color:var(--ink)">How people use the PACE sheet</b>
-      <ul style="padding-left:1.1rem;line-height:1.7;margin-top:.3rem">
-        <li>A day or two before the visit, answer the questions on the sheet. Blank spaces are fine.</li>
-        <li>Show it to your health care professional at the start of the visit, and use it during the visit to remember what you wanted to discuss.</li>
-      </ul>
-      <div class="mute" style="margin-top:.5rem">Adapted from the American Heart Association's PACE materials. Used with permission from Donald J. Cegala, PhD, Emeritus Professor of Communication and Family Medicine, Ohio State University.</div>
-    </div>
-
     <p class="mute">Next, you'll practice these skills in a short role-play built around a topic you choose.</p>
     <button class="primary" onclick="App.toSurvey()">Continue</button>
   </div>
@@ -72,17 +63,26 @@
 <!-- ═══ TOPIC (single question) ═══ -->
 <div id="view-survey" class="view">
   <div class="wrap" style="max-width:560px">
-    <h1>One question before you start</h1>
+    <h1 id="topic-label"></h1>
+    <p class="sub" id="topic-sub"></p>
     <div class="card">
       <div class="q" style="margin-bottom:0">
-        <label class="qlabel" id="topic-label"></label>
-        <div class="mute" id="topic-sub" style="margin-bottom:.5rem"></div>
         <textarea id="sv-problem_text"></textarea>
         <div class="cue" id="topic-cue"></div>
       </div>
     </div>
     <p class="mute" id="survey-err"></p>
-    <button class="primary" onclick="App.submitSurvey()">Build my practice visit</button>
+    <button class="primary" onclick="App.submitSurvey()">Continue</button>
+  </div>
+</div>
+
+<!-- ═══ SCENARIO CHOICE (five options) ═══ -->
+<div id="view-menu" class="view">
+  <div class="wrap">
+    <h1>Choose the kind of visit to practice</h1>
+    <p class="sub">Five situations patients often find hard. Pick the one that feels most like the visits you struggle with. Your topic and this choice together shape the practice visit.</p>
+    <div id="seed-list"></div>
+    <button class="primary" id="menu-next" disabled onclick="App.chooseScenario()">Build my practice visit</button>
   </div>
 </div>
 
@@ -128,26 +128,23 @@
     <div class="ss-label">📋 Your situation <span class="ss-hint">(click to expand)</span></div>
     <div class="ss-text" id="situation-text"></div>
   </div>
-  <div id="chat-log"></div>
-  <div class="see-results-row no-print" id="see-results-row" style="display:none">
-    <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did</button>
-  </div>
-  <div class="chat-input-row" id="chat-input-row">
-    <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
-    <button id="send-btn" onclick="App.send()">➤</button>
-  </div>
-
-  <!-- Coach panel: appears on the right (researcher decision, Aug 2026) -->
-  <div id="coach-panel" class="coach-panel" style="display:none">
-    <div class="cp-head">
-      <span class="cp-tag" id="coach-panel-tag">🎓 Coach</span>
-      <button class="cp-close" id="coach-panel-close" onclick="App.dismissCoach()">✕</button>
+  <div class="rp-body">
+    <div class="rp-main">
+      <div id="chat-log"></div>
+      <div class="see-results-row no-print" id="see-results-row" style="display:none">
+        <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did</button>
+      </div>
+      <div class="chat-input-row" id="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
+        <button id="send-btn" onclick="App.send()">➤</button>
+      </div>
     </div>
-    <div class="cp-body" id="coach-panel-body"></div>
-    <div class="cp-actions" id="coach-panel-actions" style="display:none">
-      <button class="cp-btn cp-yes" onclick="App.retryYes()">Try again</button>
-      <button class="cp-btn cp-no" onclick="App.retryNo()">Keep going</button>
-    </div>
+    <!-- Coach column: notes stay for the whole visit and never cover the input -->
+    <aside class="coach-col" id="coach-col">
+      <div class="cc-head">🎓 Coach</div>
+      <div class="cc-empty" id="coach-empty">Notes from your coach will appear here during the visit.</div>
+      <div id="coach-notes"></div>
+    </aside>
   </div>
 </div>
 
@@ -175,6 +172,7 @@
 
 <script src="js/config.js"></script>
 <script src="js/survey.js"></script>
+<script src="js/scenarios.js"></script>
 <script src="js/mistakes.js"></script>
 <script src="js/state.js"></script>
 <script src="js/prompts/instantiate.js"></script>

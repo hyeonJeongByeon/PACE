@@ -154,27 +154,33 @@ textarea { resize: vertical; min-height: 58px; }
 
 /* ── interview build additions ── */
 
-/* Right-side coach panel */
-.coach-panel {
-  position: fixed; right: 14px; top: 120px; width: 300px; max-width: calc(100vw - 28px);
-  background: var(--coach-bg); border: 1.5px solid var(--coach-line); border-left: 4px solid var(--coach);
-  border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); z-index: 50;
-  animation: cpIn .25s ease-out both;
-}
-@keyframes cpIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
-.coach-panel .cp-head { display: flex; align-items: center; justify-content: space-between; padding: .55rem .8rem .2rem; }
-.coach-panel .cp-tag { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--coach); }
-.coach-panel .cp-close { background: none; border: none; color: var(--ink-mute); cursor: pointer; font-size: .85rem; }
-.coach-panel .cp-body { padding: .2rem .9rem .7rem; font-size: .86rem; color: #6b4004; line-height: 1.55; }
-.coach-panel .cp-actions { display: flex; gap: .5rem; padding: 0 .9rem .8rem; }
-.coach-panel .cp-btn { flex: 1; padding: .5rem; border-radius: 8px; font-size: .82rem; font-weight: 600; cursor: pointer; border: none; }
-.coach-panel .cp-yes { background: var(--coach); color: #fff; }
-.coach-panel .cp-no { background: #fff; color: var(--ink-soft); border: 1px solid var(--coach-line); }
-.coach-panel.praise { border-left-color: var(--good); background: var(--good-bg); border-color: #bfe3cd; }
-.coach-panel.praise .cp-tag { color: var(--good); }
-.coach-panel.praise .cp-body { color: #14532d; }
-
 /* Retracted (shaded) participant message + doctor repeat label */
 .msg.retracted { opacity: .45; }
 .msg.retracted .bubble { text-decoration: none; }
 .repeat-note { align-self: flex-start; font-size: .68rem; color: var(--ink-mute); margin: -.3rem 0 -.3rem 2.5rem; }
+
+/* Coach column: part of the layout, never overlaps chat or input */
+.rp-body { flex: 1; display: flex; min-height: 0; }
+.rp-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.coach-col {
+  width: 300px; flex-shrink: 0; border-left: 1px solid var(--line);
+  background: #fbf8f2; overflow-y: auto; padding: .8rem .8rem 1rem;
+}
+.coach-col .cc-head { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--coach); margin-bottom: .6rem; }
+.coach-col .cc-empty { font-size: .78rem; color: var(--ink-mute); line-height: 1.5; }
+.coach-note {
+  background: var(--coach-bg); border: 1px solid var(--coach-line); border-left: 3px solid var(--coach);
+  border-radius: 10px; padding: .6rem .75rem; font-size: .84rem; color: #6b4004; line-height: 1.5;
+  margin-bottom: .6rem; animation: cpIn .25s ease-out both;
+}
+.coach-note.praise { border-color: #bfe3cd; border-left-color: var(--good); background: var(--good-bg); color: #14532d; }
+.coach-note .cn-actions { display: flex; gap: .5rem; margin-top: .55rem; }
+.coach-note .cp-btn { flex: 1; padding: .45rem; border-radius: 8px; font-size: .8rem; font-weight: 600; cursor: pointer; border: none; }
+.coach-note .cp-yes { background: var(--coach); color: #fff; }
+.coach-note .cp-no { background: #fff; color: var(--ink-soft); border: 1px solid var(--coach-line); }
+@keyframes cpIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 760px) {
+  .rp-body { flex-direction: column; }
+  .coach-col { width: 100%; border-left: none; border-top: 1px solid var(--line); max-height: 30vh; order: 2; }
+  .rp-main { order: 1; }
+}

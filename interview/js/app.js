@@ -21,7 +21,6 @@
   let coachedLastTurn = false;
   let skipCoachOnce = false;    // after a retry, the clinician answers directly
   let pendingRetry = null;      // {entryIndex, coachEvent}
-  let coachDismissTimer = null;
 
   // ── LLM client ──────────────────────────────────────────────────────────
   async function callModel(prompt, maxTokens) {
@@ -84,11 +83,37 @@
   }
   function toSurvey() { ST.logTransition(S, S.stage, 'survey'); show('view-survey'); }
 
-  async function submitSurvey() {
+  function submitSurvey() {
     const v = document.getElementById('sv-problem_text').value.trim();
-    if (!v) { document.getElementById('survey-err').textContent = 'Please enter a topic. A made-up one is fine.'; return; }
+    if (!v) { document.getElementById('survey-err').textContent = 'Please enter a health concern to practice with.'; return; }
     S.problem_text = v;
-    ST.logTransition(S, 'survey', 'instantiation');
+    ST.logTransition(S, 'survey', 'menu');
+    show('view-menu');
+  }
+
+  // ── Scenario choice (five options) ──────────────────────────────────────
+  let chosenSeed = null;
+  function buildMenu() {
+    const list = document.getElementById('seed-list');
+    window.PACE_SCENARIO_SEEDS.forEach(seed => {
+      const el = document.createElement('div');
+      el.className = 'card scenario-card';
+      el.innerHTML = `<b style="font-size:.9rem">${esc(seed.title)}</b>
+        <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.25rem">${esc(seed.menuDescription)}</div>`;
+      el.onclick = () => {
+        document.querySelectorAll('#seed-list .scenario-card').forEach(c => c.classList.remove('sel'));
+        el.classList.add('sel');
+        chosenSeed = seed;
+        document.getElementById('menu-next').disabled = false;
+      };
+      list.appendChild(el);
+    });
+  }
+
+  async function chooseScenario() {
+    if (!chosenSeed) return;
+    S.chosen_seed = chosenSeed.id;
+    ST.logTransition(S, 'menu', 'instantiation', `seed=${chosenSeed.id}`);
     show('view-generating');
     await instantiate();
   }
@@ -96,7 +121,7 @@
   // ── Instantiation ───────────────────────────────────────────────────────
   async function instantiate() {
     try {
-      const j = await callJSON(PR.instantiate(S.problem_text, REGISTER), 1200, 1);
+      const j = await callJSON(PR.instantiate(S.problem_text, chosenSeed, REGISTER), 1300, 1);
       if (!j.scenario || !j.persona) throw new Error('Incomplete scenario');
       S.scenario = j.scenario;
       S.persona = j.persona;
@@ -110,7 +135,7 @@
       };
       S.persona = {
         display_name: 'Dr. Alvarez',
-        description: 'An ordinary, capable clinician on a busy day. Friendly but brief; explains well when asked.',
+        description: (chosenSeed && chosenSeed.persona_seed) || 'An ordinary, capable clinician on a busy day. Friendly but brief; explains well when asked.',
         principles: [
           'You know only what is in your chart. Do not reference treatments, results, or history that are not in your chart. If you need information you do not have, ask for it.',
           'Never give real medical advice; all clinical content stays within this fictional practice scenario.',
@@ -167,12 +192,6 @@
 
   function renderMsg(entry) {
     const log = document.getElementById('chat-log');
-    if (entry.repeat_of != null) {
-      const note = document.createElement('div');
-      note.className = 'repeat-note';
-      note.textContent = 'the doctor gives you another moment';
-      log.appendChild(note);
-    }
     const div = document.createElement('div');
     div.className = `msg ${entry.role === 'participant' ? 'participant' : ''}`;
     div.dataset.idx = S.transcript.indexOf(entry);
@@ -223,20 +242,29 @@
     }).filter(Boolean).join('\n');
   }
 
-  // ── Coach panel UI ──────────────────────────────────────────────────────
-  function showCoachPanel(type, message, withActions) {
-    clearTimeout(coachDismissTimer);
-    const panel = document.getElementById('coach-panel');
-    panel.className = 'coach-panel' + (type === 'praise' ? ' praise' : '');
-    document.getElementById('coach-panel-tag').textContent = type === 'praise' ? '🎓 Coach' : '🎓 Coach tip';
-    document.getElementById('coach-panel-body').textContent = message;
-    document.getElementById('coach-panel-actions').style.display = withActions ? 'flex' : 'none';
-    document.getElementById('coach-panel-close').style.display = withActions ? 'none' : 'block';
-    panel.style.display = 'block';
-    if (!withActions) coachDismissTimer = setTimeout(dismissCoach, 12000);
+  // ── Coach column UI (notes persist for the whole visit) ─────────────────
+  let pendingNoteEl = null;
+  function addCoachNote(type, message, withActions) {
+    document.getElementById('coach-empty').style.display = 'none';
+    const notes = document.getElementById('coach-notes');
+    const div = document.createElement('div');
+    div.className = 'coach-note' + (type === 'praise' ? ' praise' : '');
+    div.innerHTML = `<div>${esc(message)}</div>` + (withActions ? `
+      <div class="cn-actions">
+        <button class="cp-btn cp-yes" onclick="App.retryYes()">Try again</button>
+        <button class="cp-btn cp-no" onclick="App.retryNo()">Keep going</button>
+      </div>` : '');
+    notes.prepend(div);
+    if (withActions) pendingNoteEl = div;
+    const col = document.getElementById('coach-col');
+    col.scrollTop = 0;
   }
-  function dismissCoach() {
-    document.getElementById('coach-panel').style.display = 'none';
+  function clearNoteActions() {
+    if (pendingNoteEl) {
+      const a = pendingNoteEl.querySelector('.cn-actions');
+      if (a) a.remove();
+      pendingNoteEl = null;
+    }
   }
 
   // ── Send flow ───────────────────────────────────────────────────────────
@@ -247,7 +275,6 @@
     if (!text) return;
     inp.value = '';
     setBusy(true);
-    dismissCoach();
     if (effectiveTurns() === 0) document.getElementById('situation-strip').classList.add('collapsed');
 
     // clock phases, before this turn counts
@@ -304,7 +331,7 @@
 
     if (d.intervene === 'praise') {
       praisedSkills.push(d.skill);
-      showCoachPanel('praise', d.message, false);
+      addCoachNote('praise', d.message, false);
       return 'shown';
     }
 
@@ -312,10 +339,10 @@
     if (d.worth_retry && !closed && !S.visit.in_grace) {
       event.retry_offered = true;
       pendingRetry = { entryIndex, event };
-      showCoachPanel('improve', d.message + ' Want to try that again?', true);
+      addCoachNote('improve', d.message + ' Want to try that again?', true);
       return 'waiting'; // input stays disabled until they choose
     }
-    showCoachPanel('improve', d.message, false);
+    addCoachNote('improve', d.message, false);
     return 'shown';
   }
 
@@ -328,7 +355,7 @@
     if (bubble) bubble.classList.add('retracted');
     const lastClin = [...S.transcript].reverse().find(m => m.role === 'clinician' && m.repeat_of == null);
     pushMsg('clinician', lastClin ? lastClin.text : '', { repeat_of: lastClin ? S.transcript.indexOf(lastClin) : null });
-    dismissCoach();
+    clearNoteActions();
     pendingRetry = null;
     skipCoachOnce = true;   // the retry goes straight to the clinician
     setBusy(false);
@@ -337,7 +364,7 @@
   async function retryNo() {
     if (!pendingRetry) return;
     pendingRetry = null;
-    dismissCoach();
+    clearNoteActions();
     try { await clinicianTurn(false); }
     catch (e) { addError(e.message); setBusy(false); }
   }
@@ -364,7 +391,7 @@
       : (S.visit.in_grace || minutesLeft() <= 0 || effectiveTurns() >= CFG.MAX_TURNS) ? 'closed_at_cap' : 'closed_natural';
     ST.logTransition(S, 'roleplay', 'closed', `how=${how} resolution=${S.resolution_state} turns=${S.visit.participant_turns} coach=${S.coach_events.length}`);
     setBusy(true);
-    dismissCoach();
+    clearNoteActions();
     document.getElementById('chat-input-row').style.display = 'none';
     document.getElementById('see-results-row').style.display = 'block';
   }
@@ -553,6 +580,7 @@
 
   // ── Init ────────────────────────────────────────────────────────────────
   buildSurvey();
+  buildMenu();
   const urlPass = new URLSearchParams(location.search).get('pass');
   const stored = sessionStorage.getItem('paceiv_passcode');
   if (urlPass || stored) {
@@ -562,5 +590,5 @@
     show('view-education');
   }
 
-  window.App = { enterPasscode, toSurvey, submitSurvey, startVisit, send, exitNow, toSummary, retryYes, retryNo, dismissCoach, downloadJSON, downloadReport };
+  window.App = { enterPasscode, toSurvey, submitSurvey, chooseScenario, startVisit, send, exitNow, toSummary, retryYes, retryNo, downloadJSON, downloadReport };
 })();
