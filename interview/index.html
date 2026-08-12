@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACE Practice</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="topbar" id="topbar" style="display:none">
+  <span class="brand">PACE</span>
+  <span class="frame">🎭 Practice simulation, not medical advice or real care</span>
+  <button class="exit" onclick="App.exitNow()">Exit practice</button>
+</div>
+
+<!-- ═══ GATE ═══ -->
+<div id="view-gate" class="view active">
+  <div class="wrap" style="max-width:420px;padding-top:4.5rem">
+    <h1>PACE Practice</h1>
+    <p class="sub">Enter the study passcode to begin.</p>
+    <input type="password" id="passcode-input" placeholder="Study passcode" onkeypress="if(event.key==='Enter')App.enterPasscode()">
+    <button class="primary" onclick="App.enterPasscode()">Continue</button>
+    <p class="mute" id="gate-err" style="margin-top:.6rem"></p>
+  </div>
+</div>
+
+<!-- ═══ EDUCATION (adapted from AHA PACE materials / Cegala, OSU) ═══ -->
+<div id="view-education" class="view">
+  <div class="wrap">
+    <h1>Preparing for a medical visit</h1>
+    <p class="sub">Office visits are short, often about 15 minutes. Preparing ahead helps you make the most of that time. Researchers at Ohio State University developed the <a href="https://wexnermedical.osu.edu/-/media/files/wexnermedical/blog/2017pace.pdf" target="_blank" rel="noopener">PACE Guide Sheet</a> as an easy way to organize your feelings, questions, and concerns before a visit.</p>
+
+    <div class="card pace-item"><div class="pace-letter P">P</div><div><b>Provide information about how you feel.</b>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.2rem">Write down your symptoms and concerns before the visit. Note when things started, how often they happen, and what you have tried. Think about what you hope your health care professional can do for you.</div>
+      <div class="example">"Is the pain constant, or does it come and go?"</div>
+      <div class="example">"Does anything make it better or worse, like activity, food, or medication?"</div>
+    </div></div>
+
+    <div class="card pace-item"><div class="pace-letter A">A</div><div><b>Ask questions if you don't have enough information.</b>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.2rem">Think of your questions before the appointment and write them down. If you have more than three, star the most important ones so you ask those first.</div>
+      <div class="example">"What is this condition, and why do I have it?"</div>
+      <div class="example">"What side effects should I watch for, and what should I do if I miss a dose?"</div>
+    </div></div>
+
+    <div class="card pace-item"><div class="pace-letter C">C</div><div><b>Clarify what you hear.</b>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.2rem">Medical visits pack in a lot. Ask for simpler words when you need them, repeat instructions back in your own words, and review what you heard before you leave. If you might forget something, ask them to write it down.</div>
+      <div class="example">"I don't understand. Can you say that again, using simpler words?"</div>
+      <div class="example">"I think you're telling me that I should take this twice a day. Is that right?"</div>
+    </div></div>
+
+    <div class="card pace-item"><div class="pace-letter E">E</div><div><b>Express any concerns you may have.</b>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.2rem">Speak up about worries with your condition or the plan. If a treatment is hard to follow or has side effects, be honest instead of quietly stopping. There is often another option that fits you better.</div>
+      <div class="example">"I'm not sure I can manage this every morning. Is there another way to take it?"</div>
+      <div class="example">"That side effect worries me. What are my options?"</div>
+    </div></div>
+
+    <div class="card" style="font-size:.84rem;color:var(--ink-soft)">
+      <b style="color:var(--ink)">How people use the PACE sheet</b>
+      <ul style="padding-left:1.1rem;line-height:1.7;margin-top:.3rem">
+        <li>A day or two before the visit, answer the questions on the sheet. Blank spaces are fine.</li>
+        <li>Show it to your health care professional at the start of the visit, and use it during the visit to remember what you wanted to discuss.</li>
+      </ul>
+      <div class="mute" style="margin-top:.5rem">Adapted from the American Heart Association's PACE materials. Used with permission from Donald J. Cegala, PhD, Emeritus Professor of Communication and Family Medicine, Ohio State University.</div>
+    </div>
+
+    <p class="mute">Next, you'll practice these skills in a short role-play built around a topic you choose.</p>
+    <button class="primary" onclick="App.toSurvey()">Continue</button>
+  </div>
+</div>
+
+<!-- ═══ TOPIC (single question) ═══ -->
+<div id="view-survey" class="view">
+  <div class="wrap" style="max-width:560px">
+    <h1>One question before you start</h1>
+    <div class="card">
+      <div class="q" style="margin-bottom:0">
+        <label class="qlabel" id="topic-label"></label>
+        <div class="mute" id="topic-sub" style="margin-bottom:.5rem"></div>
+        <textarea id="sv-problem_text"></textarea>
+        <div class="cue" id="topic-cue"></div>
+      </div>
+    </div>
+    <p class="mute" id="survey-err"></p>
+    <button class="primary" onclick="App.submitSurvey()">Build my practice visit</button>
+  </div>
+</div>
+
+<!-- ═══ GENERATING ═══ -->
+<div id="view-generating" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <div class="spinner"></div>
+    <h1 style="font-size:1.1rem">Setting up your visit…</h1>
+    <p class="sub">Building the scenario around your topic</p>
+  </div>
+</div>
+
+<!-- ═══ BRIEFING ═══ -->
+<div id="view-briefing" class="view">
+  <div class="wrap">
+    <h1>Your situation</h1>
+    <div class="card" id="brief-premise" style="font-size:.95rem;line-height:1.65"></div>
+    <div class="card chart-box">
+      <div class="chart-box-label">📄 What's already in your chart</div>
+      <div class="mute" style="margin-bottom:.4rem">The doctor walks in knowing this, so you don't need to repeat it:</div>
+      <ul id="brief-chart" style="padding-left:1.1rem;font-size:.86rem;line-height:1.6"></ul>
+    </div>
+    <div class="card" style="font-size:.84rem;color:var(--ink-soft)">
+      <b style="color:var(--ink)">How this works</b>
+      <ul style="padding-left:1.1rem;line-height:1.7;margin-top:.3rem">
+        <li>Everything is typed chat. Coach notes appear in a small panel on the right.</li>
+        <li>Please don't look things up outside. Asking the doctor is the exercise.</li>
+        <li>The visit wraps up in conversation. When it ends, one button takes you to your summary.</li>
+      </ul>
+    </div>
+    <button class="primary" onclick="App.startVisit()">Walk in</button>
+  </div>
+</div>
+
+<!-- ═══ ROLE-PLAY ═══ -->
+<div id="view-roleplay" class="view">
+  <div class="chat-head">
+    <div class="avatar">🩺</div>
+    <div class="who"><b id="rp-name"></b><div>Practice visit</div></div>
+    <span class="timer-pill" id="timer-pill">⏱ <b id="rp-timer">10:00</b> left</span>
+  </div>
+  <div class="situation-strip collapsed" id="situation-strip" onclick="this.classList.toggle('collapsed')">
+    <div class="ss-label">📋 Your situation <span class="ss-hint">(click to expand)</span></div>
+    <div class="ss-text" id="situation-text"></div>
+  </div>
+  <div id="chat-log"></div>
+  <div class="see-results-row no-print" id="see-results-row" style="display:none">
+    <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did</button>
+  </div>
+  <div class="chat-input-row" id="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
+    <button id="send-btn" onclick="App.send()">➤</button>
+  </div>
+
+  <!-- Coach panel: appears on the right (researcher decision, Aug 2026) -->
+  <div id="coach-panel" class="coach-panel" style="display:none">
+    <div class="cp-head">
+      <span class="cp-tag" id="coach-panel-tag">🎓 Coach</span>
+      <button class="cp-close" id="coach-panel-close" onclick="App.dismissCoach()">✕</button>
+    </div>
+    <div class="cp-body" id="coach-panel-body"></div>
+    <div class="cp-actions" id="coach-panel-actions" style="display:none">
+      <button class="cp-btn cp-yes" onclick="App.retryYes()">Try again</button>
+      <button class="cp-btn cp-no" onclick="App.retryNo()">Keep going</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div id="view-summary" class="view">
+  <div class="wrap">
+    <h1>How your practice visit went</h1>
+    <p class="sub" id="summary-sub"></p>
+    <div id="summary-body"><div class="card"><div class="spinner" style="margin:1rem auto"></div><p style="text-align:center" class="mute" id="summary-progress">Looking back over your visit…</p></div></div>
+    <div class="tools-row no-print" id="summary-tools" style="display:none">
+      <button class="ghost" onclick="App.downloadReport()">⬇ Download summary</button>
+      <button class="ghost" onclick="App.downloadJSON()">⬇ Session data (JSON)</button>
+      <button class="ghost" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXITED ═══ -->
+<div id="view-exited" class="view">
+  <div class="wrap" style="text-align:center;padding-top:5rem">
+    <h1>Session ended</h1>
+    <p class="sub">Thanks for trying PACE. You can close this window.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/survey.js"></script>
+<script src="js/mistakes.js"></script>
+<script src="js/state.js"></script>
+<script src="js/prompts/instantiate.js"></script>
+<script src="js/prompts/clinician.js"></script>
+<script src="js/prompts/coach.js"></script>
+<script src="js/prompts/annotator.js"></script>
+<script src="js/prompts/overview.js"></script>
+<script src="js/prompts/qa.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
