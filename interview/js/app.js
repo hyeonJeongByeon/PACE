@@ -242,22 +242,21 @@
     }).filter(Boolean).join('\n');
   }
 
-  // ── Coach column UI (notes persist for the whole visit) ─────────────────
+  // ── Coach notes: inline in the conversation, next to the message they
+  // refer to, so they scroll up with the chat ──────────────────────────────
   let pendingNoteEl = null;
   function addCoachNote(type, message, withActions) {
-    document.getElementById('coach-empty').style.display = 'none';
-    const notes = document.getElementById('coach-notes');
+    const log = document.getElementById('chat-log');
     const div = document.createElement('div');
-    div.className = 'coach-note' + (type === 'praise' ? ' praise' : '');
-    div.innerHTML = `<div>${esc(message)}</div>` + (withActions ? `
+    div.className = 'coach-note inline' + (type === 'praise' ? ' praise' : '');
+    div.innerHTML = `<div style="font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.15rem;color:${type === 'praise' ? 'var(--good)' : 'var(--coach)'}">🎓 Coach</div><div>${esc(message)}</div>` + (withActions ? `
       <div class="cn-actions">
         <button class="cp-btn cp-yes" onclick="App.retryYes()">Try again</button>
         <button class="cp-btn cp-no" onclick="App.retryNo()">Keep going</button>
       </div>` : '');
-    notes.prepend(div);
+    log.appendChild(div);
     if (withActions) pendingNoteEl = div;
-    const col = document.getElementById('coach-col');
-    col.scrollTop = 0;
+    log.scrollTop = log.scrollHeight;
   }
   function clearNoteActions() {
     if (pendingNoteEl) {
@@ -481,7 +480,6 @@
         strengths: 'You finished a full practice visit. Everything you did is saved in the download below.',
         growth: '',
         next_visit_prep: ['Write your main question down before your next appointment.'],
-        goal_line: 'Carry one of these skills into your next visit.',
       },
       level2, level3,
       generated_at: new Date().toISOString(),
@@ -527,34 +525,61 @@
   function renderReport() {
     const rc = S.report_card;
     const body = document.getElementById('summary-body');
-    let html = `<div class="level-tag">Overview</div>
+
+    // turn → skill map for highlights (coach notes + report excerpts)
+    const turnSkill = {};
+    S.coach_events.forEach(e => { if (e.turn != null && !turnSkill[e.turn]) turnSkill[e.turn] = e.skill; });
+    rc.level3.forEach(it => { if (!turnSkill[it.turn]) turnSkill[it.turn] = it.component; });
+    const goodPicks = {};
+    for (const l of rc.level2) {
+      if (rc.level3.some(it => it.component === l.component)) continue;
+      const good = (S.turn_annotations || []).find(a => a.appropriate === true && (a.good_areas || []).includes(l.component));
+      if (good) { goodPicks[l.component] = good; if (!turnSkill[good.turn]) turnSkill[good.turn] = l.component; }
+    }
+
+    // ── Left pane: the whole conversation ──
+    const coachByTurn = {};
+    S.coach_events.forEach(e => { (coachByTurn[e.turn] = coachByTurn[e.turn] || []).push(e); });
+    let convo = '<div class="cv-head">Your conversation</div>';
+    for (const m of S.transcript) {
+      if (m.role === 'coach') continue;
+      if (m.role === 'clinician') {
+        convo += `<div class="cv-msg cv-doc"><div class="cv-who">${esc(S.persona.display_name)}</div>${esc(m.text)}</div>`;
+      } else {
+        const sk = turnSkill[m.turn];
+        convo += `<div class="cv-msg cv-pat${m.retracted ? ' cv-retracted' : ''}${sk && !m.retracted ? ' sk-' + sk : ''}"><div class="cv-who">You</div>${esc(m.text)}</div>`;
+        (coachByTurn[m.turn] || []).forEach(e => {
+          convo += `<div class="cv-coach sk-${e.skill}">🎓 ${esc(e.message)}</div>`;
+        });
+      }
+    }
+
+    // ── Right pane: the summary ──
+    let sum = `<div class="level-tag" style="margin-top:0">Overview</div>
       <div class="card" style="font-size:.92rem;line-height:1.65">
         <div class="report-row" style="margin-top:0"><b>What went well:</b> ${esc(rc.level1.strengths || rc.level1.overview || '')}</div>
         ${rc.level1.growth ? `<div class="report-row"><b>Something to build on:</b> ${esc(rc.level1.growth)}</div>` : ''}
       </div>`;
 
-    // Skill by skill, with a conversation excerpt (good or otherwise) in each card
-    html += `<div class="level-tag">Skill by skill</div>`;
+    sum += `<div class="level-tag">Skill by skill</div>`;
     for (const l of rc.level2) {
       const neg = rc.level3.find(it => it.component === l.component);
       let excerpt = '';
       if (neg) {
         const quote = fullTurnText(neg.turn) || neg.utterance;
         excerpt = `
-          <div class="l3-quote">"${esc(quote)}"</div>
+          <div class="l3-quote sk-${l.component}">"${esc(quote)}"</div>
           <div class="report-row">${esc(neg.feedback)}</div>
           <div class="l3-alt">You might consider saying: "${esc(neg.alternative)}"</div>`;
-      } else {
-        const good = (S.turn_annotations || []).find(a => a.appropriate === true && (a.good_areas || []).includes(l.component));
-        if (good) {
-          const quote = fullTurnText(good.turn) || good.utterance;
-          const praise = S.coach_events.find(e => e.type === 'praise' && e.skill === l.component);
-          excerpt = `
-            <div class="l3-quote">"${esc(quote)}"</div>
-            <div class="report-row">${esc(praise ? praise.message : 'This one landed well. Keep doing this.')}</div>`;
-        }
+      } else if (goodPicks[l.component]) {
+        const good = goodPicks[l.component];
+        const quote = fullTurnText(good.turn) || good.utterance;
+        const praise = S.coach_events.find(e => e.type === 'praise' && e.skill === l.component);
+        excerpt = `
+          <div class="l3-quote sk-${l.component}">"${esc(quote)}"</div>
+          <div class="report-row">${esc(praise ? praise.message : 'This one landed well. Keep doing this.')}</div>`;
       }
-      html += `<div class="card">
+      sum += `<div class="card">
         <div class="comp-head"><div class="pace-letter ${l.component}" style="width:30px;height:30px;flex:0 0 30px;font-size:.85rem">${l.component}</div>
           <b>${esc(l.gloss)}</b>
           ${l.praised ? '<span class="chip met">Coach liked this</span>' : ''}
@@ -564,12 +589,13 @@
       </div>`;
     }
 
+    sum += `<div class="level-tag">For your next visit</div>
+      <div class="card"><ul style="padding-left:1.1rem;font-size:.88rem;line-height:1.7">${(rc.level1.next_visit_prep || []).map(b => `<li>${esc(b)}</li>`).join('')}</ul></div>`;
 
-    html += `<div class="level-tag">For your next visit</div>
-      <div class="card"><ul style="padding-left:1.1rem;font-size:.88rem;line-height:1.7">${(rc.level1.next_visit_prep || []).map(b => `<li>${esc(b)}</li>`).join('')}</ul></div>
-      <div class="goal-band"><div class="g-label">Your one goal</div>${esc(rc.level1.goal_line)}</div>`;
-
-    body.innerHTML = html;
+    body.innerHTML = `<div class="summary-layout">
+      <div class="convo-pane">${convo}</div>
+      <div>${sum}</div>
+    </div>`;
     document.getElementById('summary-tools').style.display = 'flex';
   }
 
@@ -601,7 +627,6 @@
       }),
       `## For your next visit`,
       ...(rc.level1.next_visit_prep || []).map(b => `- ${b}`),
-      ``, `**Your one goal:** ${rc.level1.goal_line}`,
     ].join('\n');
     dl(`pace-summary-${Date.now()}.md`, md, 'text/markdown');
   }

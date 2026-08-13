@@ -184,3 +184,25 @@ textarea { resize: vertical; min-height: 58px; }
   .coach-col { width: 100%; border-left: none; border-top: 1px solid var(--line); max-height: 30vh; order: 2; }
   .rp-main { order: 1; }
 }
+
+/* Inline coach notes: attached to the conversation, scroll with it */
+.coach-note.inline { align-self: flex-end; max-width: 78%; margin: -.2rem 0 0; }
+
+/* Last page: conversation left, summary right (laptop) */
+.summary-layout { display: grid; grid-template-columns: minmax(300px, 430px) 1fr; gap: 1.2rem; align-items: start; }
+@media (max-width: 900px) { .summary-layout { grid-template-columns: 1fr; } }
+.convo-pane { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem; max-height: 78vh; overflow-y: auto; position: sticky; top: 60px; }
+.convo-pane .cv-head { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: .7rem; }
+.cv-msg { border-radius: 10px; padding: .5rem .7rem; font-size: .8rem; line-height: 1.5; margin-bottom: .55rem; }
+.cv-msg.cv-doc { background: var(--bg); border: 1px solid var(--line); margin-right: 1.6rem; }
+.cv-msg.cv-pat { background: var(--accent-soft); margin-left: 1.6rem; }
+.cv-msg.cv-retracted { opacity: .45; }
+.cv-who { font-size: .64rem; font-weight: 700; color: var(--ink-mute); margin-bottom: .15rem; }
+.cv-coach { font-size: .74rem; border-radius: 8px; padding: .45rem .6rem; margin: 0 0 .55rem 1.6rem; background: var(--coach-bg); border: 1px solid var(--coach-line); color: #6b4004; line-height: 1.45; }
+/* PACE skill highlights (shared between panes) */
+.sk-P { border-left: 4px solid var(--P) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--P) 25%, transparent); }
+.sk-A { border-left: 4px solid var(--A) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--A) 25%, transparent); }
+.sk-C { border-left: 4px solid var(--C) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--C) 25%, transparent); }
+.sk-E { border-left: 4px solid var(--E) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--E) 25%, transparent); }
+.l3-quote.sk-P { border-left-color: var(--P); } .l3-quote.sk-A { border-left-color: var(--A); }
+.l3-quote.sk-C { border-left-color: var(--C); } .l3-quote.sk-E { border-left-color: var(--E); }

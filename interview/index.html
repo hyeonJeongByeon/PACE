@@ -129,29 +129,19 @@
     <div class="ss-label">📋 Your situation <span class="ss-hint">(click to expand)</span></div>
     <div class="ss-text" id="situation-text"></div>
   </div>
-  <div class="rp-body">
-    <div class="rp-main">
-      <div id="chat-log"></div>
-      <div class="see-results-row no-print" id="see-results-row" style="display:none">
-        <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did</button>
-      </div>
-      <div class="chat-input-row" id="chat-input-row">
-        <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
-        <button id="send-btn" onclick="App.send()">➤</button>
-      </div>
-    </div>
-    <!-- Coach column: notes stay for the whole visit and never cover the input -->
-    <aside class="coach-col" id="coach-col">
-      <div class="cc-head">🎓 Coach</div>
-      <div class="cc-empty" id="coach-empty">Notes from your coach will appear here during the visit.</div>
-      <div id="coach-notes"></div>
-    </aside>
+  <div id="chat-log"></div>
+  <div class="see-results-row no-print" id="see-results-row" style="display:none">
+    <button class="primary" style="margin-top:0" onclick="App.toSummary()">See how you did</button>
+  </div>
+  <div class="chat-input-row" id="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Say something to the doctor…" onkeypress="if(event.key==='Enter'&&!this.disabled)App.send()">
+    <button id="send-btn" onclick="App.send()">➤</button>
   </div>
 </div>
 
-<!-- ═══ SUMMARY ═══ -->
+<!-- ═══ SUMMARY (two panes: conversation left, summary right) ═══ -->
 <div id="view-summary" class="view">
-  <div class="wrap">
+  <div class="wrap" style="max-width:1160px">
     <h1>How your practice visit went</h1>
     <p class="sub" id="summary-sub"></p>
     <div id="summary-body"><div class="card"><div class="spinner" style="margin:1rem auto"></div><p style="text-align:center" class="mute" id="summary-progress">Looking back over your visit…</p></div></div>
