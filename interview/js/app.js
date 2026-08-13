@@ -55,6 +55,42 @@
     throw lastErr;
   }
 
+  // ── Session logging to Google Sheets (fire-and-forget, never blocks UX) ──
+  function transcriptPlain() {
+    return S.transcript.map(m => {
+      const who = m.role === 'clinician' ? (S.persona ? S.persona.display_name : 'Doctor')
+        : m.role === 'coach' ? 'Coach' : 'You';
+      return `${who}${m.retracted ? ' (retried)' : ''}: ${m.text}`;
+    }).join('\n');
+  }
+
+  function logToSheet(event) {
+    if (!CFG.LOG_ENDPOINT) return;
+    const clip = (t, n) => (t || '').slice(0, n || 45000);
+    const payload = {
+      event,
+      session_id: S.session_id,
+      topic: clip(S.problem_text, 500),
+      scenario_seed: S.chosen_seed || '',
+      resolution: S.resolution_state || '',
+      turns: S.visit.participant_turns || 0,
+      coach_notes: S.coach_events.length,
+      transcript_text: clip(transcriptPlain()),
+      report_json: clip(JSON.stringify(S.report_card || null)),
+      session_json: clip(JSON.stringify(S)),
+    };
+    try {
+      // text/plain keeps it a simple request (no CORS preflight); the
+      // response is opaque and ignored on purpose.
+      fetch(CFG.LOG_ENDPOINT, { method: 'POST', mode: 'no-cors', keepalive: true, body: JSON.stringify(payload) });
+    } catch (e) { console.warn('sheet log failed', e); }
+  }
+
+  // Best-effort partial log if the tab closes mid-visit
+  window.addEventListener('pagehide', () => {
+    if (S.stage === 'roleplay' && S.visit.participant_turns > 0) logToSheet('abandoned_midvisit');
+  });
+
   // ── Views ───────────────────────────────────────────────────────────────
   function show(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -396,6 +432,7 @@
     ST.logTransition(S, 'roleplay', 'closed', `how=${how} resolution=${S.resolution_state} turns=${S.visit.participant_turns} coach=${S.coach_events.length}`);
     setBusy(true);
     clearNoteActions();
+    logToSheet('visit_closed');
     document.getElementById('chat-input-row').style.display = 'none';
     document.getElementById('see-results-row').style.display = 'block';
   }
@@ -485,6 +522,7 @@
       generated_at: new Date().toISOString(),
     };
     renderReport();
+    logToSheet('report_ready');
   }
 
   function substitutedTranscript(turn, alternative) {

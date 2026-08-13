@@ -15,4 +15,10 @@ window.PACE_CONFIG = {
 
   // Report card volume cap
   MAX_LEVEL3: 4,
+
+  // Session logging to a Google Sheet via an Apps Script web app.
+  // Empty string = logging disabled. See interview/logging-setup.md.
+  // NOTE: enabling this stores transcripts outside the participant's browser —
+  // a deviation from the original no-server-storage design; researcher's call.
+  LOG_ENDPOINT: '',
 };
