@@ -15,11 +15,13 @@ TOPIC THE PARTICIPANT WANTS TO PRACTICE DISCUSSING:
 VISIT STYLE THE PARTICIPANT CHOSE: "${seed.title}"
 ${seed.menuDescription}
 CLINICIAN STYLE SEED: ${seed.persona_seed}
+THE COMMUNICATION CHALLENGE (this is the whole point of the practice; the visit must clearly feel like this): ${seed.behavior}
 
 RULES:
 - Low-acuity, non-alarming. Never introduce serious diagnoses, emergencies, or frightening possibilities. Never diagnose a real condition.
 - Split the information: clinician_knows is the chart (topic-level facts a real chart would hold, written in plain language, since the participant will see this list). Everything about how it feels, how long, what has been tried, and what the patient hopes for belongs in clinician_does_not_know. That gap is what makes the practice work.
-- The clinician is an ordinary, believable provider built from the style seed above. Keep the style realistic and mild, a person, not a caricature. When the patient asks, persists, or speaks up, the clinician responds well. That responsiveness is the point of the practice.
+- The premise must ground the chosen visit style in the fiction so the participant feels it before the first message (for a rushed visit: the packed waiting room, the doctor running behind; for a dismissive one: a doctor known for quick reassurance; and so on).
+- The opening turn must ALREADY show the visit style. A rushed doctor opens hurried; a confusing one opens with a term; a dismissive one opens pleasant but shallow. Realistic, not a cartoon, but unmistakable.
 - opening_turn: greet and orient in one sentence, mention something from the chart so the visit feels booked in advance, and invite the patient to say more. Do not ask a question so broad that any answer works.
 - premise: second person, 3 to 5 sentences, the moment before the exam room door opens.
 - ${register.styleNote}

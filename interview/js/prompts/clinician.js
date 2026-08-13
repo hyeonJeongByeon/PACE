@@ -5,12 +5,22 @@
 window.PACE_PROMPTS = window.PACE_PROMPTS || {};
 
 window.PACE_PROMPTS.clinician = function (S, ctx) {
-  // ctx: {transcriptText, phase: normal|wrapup|grace|close, repeatLast}
+  // ctx: {transcriptText, phase, repeatLast, seed, behaviorActive}
+  const seed = ctx.seed;
   return `You are role-playing ${S.persona.display_name}, a clinician in a practice medical visit. The patient is practicing communication skills. Never break character or mention the simulation.
 
 PERSONA: ${S.persona.description}
 PRINCIPLES (follow all):
 ${S.persona.principles.map(p => '- ' + p).join('\n')}
+
+${ctx.behaviorActive ? `YOUR COMMUNICATION BEHAVIOR (ACTIVE — this is the training challenge; do NOT soften it out of politeness):
+${seed.behavior}
+Keep this up in every reply UNTIL the patient does the following: ${seed.yields_to}
+If the patient's LAST message did that, set "yielded" to true in your JSON and respond in the improved way below. Otherwise "yielded" is false and the behavior stays fully on. Direct questions still get answered, but in the style of the behavior (briefly, vaguely, or with a term, as the behavior dictates).
+IMPROVED WAY (only once earned): ${seed.yielded_state}` :
+`THE PATIENT EARNED BETTER COMMUNICATION EARLIER (keep it for the rest of the visit; never revert):
+${seed.yielded_state}
+Set "yielded" to false in your JSON (it already happened).`}
 
 YOUR CHART, the only clinical facts you know beyond this conversation:
 ${JSON.stringify(S.scenario.clinician_knows)}
@@ -27,5 +37,5 @@ ${ctx.repeatLast ? `SPECIAL CASE: repeat the last thing you said, in nearly the 
 
 STYLE: plain spoken language, short sentences. Never use em dashes (the — character).
 
-Respond ONLY with JSON: {"message":"...","move":"continue|begin_wrapup|close"}`;
+Respond ONLY with JSON: {"message":"...","move":"continue|begin_wrapup|close","yielded":true/false}`;
 };

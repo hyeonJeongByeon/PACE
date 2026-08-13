@@ -21,6 +21,7 @@
   let coachedLastTurn = false;
   let skipCoachOnce = false;    // after a retry, the clinician answers directly
   let pendingRetry = null;      // {entryIndex, coachEvent}
+  let behaviorActive = true;    // the scenario's communication challenge; sticky off once the patient earns it
 
   // ── LLM client ──────────────────────────────────────────────────────────
   async function callModel(prompt, maxTokens) {
@@ -415,8 +416,14 @@
       transcriptText: transcriptFor('clinician'),
       phase: phase(),
       repeatLast,
-    }), 320, 1);
+      seed: chosenSeed || window.PACE_SCENARIO_SEEDS[0],
+      behaviorActive,
+    }), 360, 1);
     showTyping(false);
+    if (behaviorActive && j.yielded === true) {
+      behaviorActive = false;
+      S.yield_events.push({ turn: effectiveTurns(), ts: new Date().toISOString() });
+    }
     pushMsg('clinician', j.message || '…');
     if (j.move === 'close' || phase() === 'close') return closeVisit('clinician_close');
     setBusy(false);

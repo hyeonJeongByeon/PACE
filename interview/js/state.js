@@ -14,6 +14,7 @@ window.PACE_STATE = (function () {
       persona: null,
       transcript: [],          // {ts, role, text, turn?, retracted?, repeat_of?}
       coach_events: [],        // {turn, type: praise|improve, skill, message, retry_offered, retry_taken}
+      yield_events: [],        // when the patient earned smoother communication
       turn_annotations: null,
       resolution_state: null,  // closed_natural | closed_at_cap | exited
       report_card: null,
