@@ -284,20 +284,25 @@
       minutesLeft() <= CFG.WARN_MINUTES_LEFT || (CFG.MAX_TURNS - effectiveTurns()) <= CFG.WRAPUP_TURNS_LEFT;
 
     const entryIndex = pushMsg('participant', text);
+    showTyping(true); // the doctor is "there" the whole time the app is working
 
     try {
       if (!skipCoachOnce) {
         const decision = await coachJudge(text);
         if (decision) {
           const handled = await handleCoach(decision, entryIndex);
-          if (handled === 'waiting') return; // paused for the retry choice
+          if (handled === 'waiting') { showTyping(false); return; } // paused for the retry choice
+        } else {
+          coachedLastTurn = false; // reset so the coach can speak on a later turn
         }
+      } else {
+        skipCoachOnce = false;
+        coachedLastTurn = false;
       }
-      skipCoachOnce = false;
-      coachedLastTurn = false || coachedLastTurn; // set inside handleCoach
       await clinicianTurn(false);
     } catch (e) {
       console.error(e);
+      showTyping(false);
       addError(e.message);
       setBusy(false);
     }
@@ -473,7 +478,8 @@
 
     S.report_card = {
       level1: level1 || {
-        overview: 'You finished a full practice visit. Everything you did is saved in the download below.',
+        strengths: 'You finished a full practice visit. Everything you did is saved in the download below.',
+        growth: '',
         next_visit_prep: ['Write your main question down before your next appointment.'],
         goal_line: 'Carry one of these skills into your next visit.',
       },
@@ -513,34 +519,51 @@
     }
   }
 
+  function fullTurnText(turn) {
+    const m = S.transcript.find(x => x.role === 'participant' && x.turn === turn);
+    return m ? m.text : null;
+  }
+
   function renderReport() {
     const rc = S.report_card;
     const body = document.getElementById('summary-body');
     let html = `<div class="level-tag">Overview</div>
-      <div class="card" style="font-size:.92rem;line-height:1.65">${esc(rc.level1.overview)}</div>`;
+      <div class="card" style="font-size:.92rem;line-height:1.65">
+        <div class="report-row" style="margin-top:0"><b>What went well:</b> ${esc(rc.level1.strengths || rc.level1.overview || '')}</div>
+        ${rc.level1.growth ? `<div class="report-row"><b>Something to build on:</b> ${esc(rc.level1.growth)}</div>` : ''}
+      </div>`;
 
+    // Skill by skill, with a conversation excerpt (good or otherwise) in each card
     html += `<div class="level-tag">Skill by skill</div>`;
     for (const l of rc.level2) {
+      const neg = rc.level3.find(it => it.component === l.component);
+      let excerpt = '';
+      if (neg) {
+        const quote = fullTurnText(neg.turn) || neg.utterance;
+        excerpt = `
+          <div class="l3-quote">"${esc(quote)}"</div>
+          <div class="report-row">${esc(neg.feedback)}</div>
+          <div class="l3-alt">You might consider saying: "${esc(neg.alternative)}"</div>`;
+      } else {
+        const good = (S.turn_annotations || []).find(a => a.appropriate === true && (a.good_areas || []).includes(l.component));
+        if (good) {
+          const quote = fullTurnText(good.turn) || good.utterance;
+          const praise = S.coach_events.find(e => e.type === 'praise' && e.skill === l.component);
+          excerpt = `
+            <div class="l3-quote">"${esc(quote)}"</div>
+            <div class="report-row">${esc(praise ? praise.message : 'This one landed well. Keep doing this.')}</div>`;
+        }
+      }
       html += `<div class="card">
         <div class="comp-head"><div class="pace-letter ${l.component}" style="width:30px;height:30px;flex:0 0 30px;font-size:.85rem">${l.component}</div>
           <b>${esc(l.gloss)}</b>
           ${l.praised ? '<span class="chip met">Coach liked this</span>' : ''}
         </div>
         <div class="report-row">${esc(l.statusLine)}</div>
+        ${excerpt}
       </div>`;
     }
 
-    if (rc.level3.length) {
-      html += `<div class="level-tag">${rc.level3.length === 1 ? 'One moment worth a second look' : 'Moments worth a second look'}</div>`;
-      for (const it of rc.level3) {
-        html += `<div class="card">
-          <div class="comp-head"><div class="pace-letter ${it.component}" style="width:30px;height:30px;flex:0 0 30px;font-size:.85rem">${it.component}</div><b>${esc(MISTAKES[it.component].gloss)}</b><span class="mute">your message ${it.turn}</span></div>
-          <div class="l3-quote">"${esc(it.utterance)}"</div>
-          <div class="report-row">${esc(it.feedback)}</div>
-          <div class="l3-alt">You could say: "${esc(it.alternative)}"</div>
-        </div>`;
-      }
-    }
 
     html += `<div class="level-tag">For your next visit</div>
       <div class="card"><ul style="padding-left:1.1rem;font-size:.88rem;line-height:1.7">${(rc.level1.next_visit_prep || []).map(b => `<li>${esc(b)}</li>`).join('')}</ul></div>
@@ -565,12 +588,17 @@
     const md = [
       `# How your practice visit went`,
       `${new Date().toLocaleDateString()} · ${S.persona.display_name} · practice visit (simulation, not medical advice)`,
-      ``, `## Overview`, rc.level1.overview, ``,
-      `## Skill by skill`,
-      ...rc.level2.map(l => `- **${l.gloss}**: ${l.statusLine}`),
-      ``,
-      ...(rc.level3.length ? [`## Moments worth a second look`,
-        ...rc.level3.flatMap(it => [`### ${MISTAKES[it.component].gloss}, your message ${it.turn}`, `> "${it.utterance}"`, ``, it.feedback, ``, `**You could say:** "${it.alternative}"`, ``])] : []),
+      ``, `## Overview`,
+      `**What went well:** ${rc.level1.strengths || ''}`,
+      ...(rc.level1.growth ? [`**Something to build on:** ${rc.level1.growth}`] : []),
+      ``, `## Skill by skill`,
+      ...rc.level2.flatMap(l => {
+        const neg = rc.level3.find(it => it.component === l.component);
+        const rows = [`### ${l.gloss}`, l.statusLine];
+        if (neg) rows.push(`> "${fullTurnText(neg.turn) || neg.utterance}"`, ``, neg.feedback, ``, `**You might consider saying:** "${neg.alternative}"`);
+        rows.push(``);
+        return rows;
+      }),
       `## For your next visit`,
       ...(rc.level1.next_visit_prep || []).map(b => `- ${b}`),
       ``, `**Your one goal:** ${rc.level1.goal_line}`,

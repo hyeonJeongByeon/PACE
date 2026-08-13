@@ -29,10 +29,10 @@ ALREADY PRAISED (never praise these skills again): ${ctx.praisedSkills.join(', '
 IMPROVEMENT NOTES GIVEN SO FAR: ${ctx.improveCount} (be increasingly reluctant past 2; the session is practice, not a critique stream)
 ${ctx.coachedLastTurn ? 'YOU SPOKE UP LAST TURN. Stay quiet now unless something clearly important happened.' : ''}
 
-Decide whether a good human coach would say something here. Most turns the answer is nothing. Speak up only when:
+Decide whether a good human coach would say something here. Speak up when you have something useful:
 - the patient just used one of the skills well and that skill has not been praised yet ("praise"), or
 - there was a clear, useful chance to use a skill and it slipped by, or the message would have landed better with one of the skills ("improve").
-Do not comment on small stuff. Do not repeat advice already given. If the clinician was clear and the patient's reply fit, there is nothing to coach.
+You do not need to comment every turn, but across a typical visit you should find a handful of moments worth a note. Do not repeat advice already given. If the clinician was clear and the patient's reply fit, stay quiet.
 
 If "improve": also decide worth_retry. Offer a retry only when trying the same moment again would teach something, for example a question that went unasked or a concern that went unvoiced at the moment it mattered. Small polish is not worth a retry.
 

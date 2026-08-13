@@ -14,11 +14,12 @@ SESSION FACTS:
 - Coach notes during the visit: ${S.coach_events.map(e => `${e.type} for ${e.skill}${e.retry_taken ? ' (they tried the moment again and improved it)' : ''}`).join('; ') || 'none'}
 
 Write:
-- "overview": one short paragraph, 3 or 4 sentences. Start with what went well, name it specifically. If they retried a moment after a coach note, credit that. The tone should fit how the visit ended.
+- "strengths": 2 or 3 sentences on what they did well, named specifically (which skills, which moments). If they retried a moment after a coach note, credit that.
+- "growth": 1 or 2 sentences on where there is room to build, phrased gently and pointed at what to try, not what went wrong. If there is nothing meaningful, say the session was solid and name what to keep doing.
 - "next_visit_prep": 3 short, concrete bullets for their next appointment, grounded in this practice and their topic. Things they can actually do, like writing a question down beforehand or opening with the details that matter.
 - "goal_line": one sentence, the single thing to carry into the next visit.
 
 Writing rules: ${register.styleNote} Banned words: ${register.banned.join('; ')}. Never entirely negative.
 
-Respond ONLY with JSON: {"overview":"...","next_visit_prep":["..."],"goal_line":"..."}`;
+Respond ONLY with JSON: {"strengths":"...","growth":"...","next_visit_prep":["..."],"goal_line":"..."}`;
 };

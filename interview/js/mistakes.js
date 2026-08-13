@@ -56,7 +56,7 @@ window.PACE_MISTAKES = {
 // Register rules for all participant-facing generated text.
 window.PACE_REGISTER = {
   readingLevel: '8th grade',
-  styleNote: 'Write like a person talking to another person: plain words, short sentences. Never use em dashes (the — character). Do not call things "real" (never write phrases like "a real ask" or "real skills"). Avoid "actually", "genuinely", and coaching jargon.',
+  styleNote: 'Write like a person talking to another person: plain words, short sentences. Never use em dashes (the — character). Never use the word "real" in any phrase (no "a real ask", "real skills", "a real foothold"). Avoid "actually", "genuinely", and coaching jargon.',
   banned: [
     'build-on moment', 'utterance', 'component', 'alignment', 'reinforcement',
     'intervention', 'trainee', 'elicit', 'psychosocial', 'behavioral',
