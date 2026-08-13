@@ -20,5 +20,5 @@ window.PACE_CONFIG = {
   // Empty string = logging disabled. See interview/logging-setup.md.
   // NOTE: enabling this stores transcripts outside the participant's browser —
   // a deviation from the original no-server-storage design; researcher's call.
-  LOG_ENDPOINT: '',
+  LOG_ENDPOINT: 'https://script.google.com/macros/s/AKfycbyWUhjdYDgkb2xvWXt5buVywvFTHH1OveodYhqsOEhwtileNbZoKuQolBfwPywGUcA_/exec',
 };
