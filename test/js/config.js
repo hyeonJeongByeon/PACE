@@ -3,7 +3,11 @@
 // currently the Anthropic-via-proxy path; a Vertex adapter would replace this
 // object plus callModel() in app.js).
 window.PACE_CONFIG = {
-  PROXY_URL: 'https://pace-proxy.pace-formative.workers.dev',
+  // On Vercel the proxy is a same-origin serverless function (api/chat.js);
+  // elsewhere (GitHub Pages, localhost) fall back to the Cloudflare Worker.
+  PROXY_URL: location.hostname.endsWith('.vercel.app')
+    ? '/api/chat'
+    : 'https://pace-proxy.pace-formative.workers.dev',
 
   // Visit clock (replaces the 12-turn cap — Advisor 2: turns are the wrong
   // unit). The planner steers like a clinician managing the clock.

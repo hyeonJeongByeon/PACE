@@ -1,6 +1,10 @@
 // PACE interview build — configuration. Researcher-editable.
 window.PACE_CONFIG = {
-  PROXY_URL: 'https://pace-proxy.pace-formative.workers.dev',
+  // On Vercel the proxy is a same-origin serverless function (api/chat.js);
+  // elsewhere (GitHub Pages, localhost) fall back to the Cloudflare Worker.
+  PROXY_URL: location.hostname.endsWith('.vercel.app')
+    ? '/api/chat'
+    : 'https://pace-proxy.pace-formative.workers.dev',
 
   // Visit clock + soft close
   MAX_TURNS: 12,

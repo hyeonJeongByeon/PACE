@@ -14,3 +14,7 @@ node_modules/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Vercel local project link
+.vercel
+.env*
